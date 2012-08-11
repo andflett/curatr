@@ -11,6 +11,8 @@ module Curatr
     
     instance_eval &block if block_given?
   
+    resource.run
+  
   end
   
   def self.fields(options = {})
@@ -30,7 +32,16 @@ module Curatr
     def config
       Curatr.config.resources[self.to_s.underscore]
     end
-                                                
+    
+    def run
+      daemon = Daemons.call do
+        loop {
+          self.receive
+          sleep 30
+        }
+      end
+    end
+                                        
     def receive
 
       begin

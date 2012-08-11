@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.add_dependency "rails"         , ">= 3.0.7"  
   s.add_dependency "bitly"
   s.add_dependency "profanalyzer"
-  s.add_dependency "whenever"
+  s.add_dependency "daemons"
 
   s.files = `git ls-files`.split("\n")
   s.executables = `git ls-files`.split("\n").map{|f| f =~ /^bin\/(.*)/ ? $1 : nil}.compact
