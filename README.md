@@ -4,20 +4,35 @@ Email/POST/Twitter -> ActiveRecord -> Manual Curation/Publishing -> Twitter
 
 ## Install
 
-``` ruby
+``` bash
 rails generate curatr:extension ModelName
+rake db:migrate
 ```
 
 ### Config
 
-- mail server YML
+Edit mail server YML
 
-- Overwrite classmethods in your model, something like:
+#### (optional) Change the fields content is saved to in your initializer:
 
-	def store(mail)
-		puts #{mail.inspect}
-	end
+    fields :subject => :title, :body => :description
 
-- Or to just change the fields content is saved to in your initializer:
+#### (optional) Overwrite class methods in your model
 
-	fields :subject => :title, :body => :description
+    def store(mail)
+      puts #{mail.inspect}
+    end
+
+### Running
+
+Each model will run a deamon to fetch emails from the server and parse them. If you wish to manually fetch:
+
+    ModelName.fetch
+
+Entries will have to be manually published unless:
+
+    Curatr.register ModelName do
+ 
+      automatically_publish
+             
+    end

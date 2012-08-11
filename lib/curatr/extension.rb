@@ -10,7 +10,7 @@ module Curatr
     @config = config.resources[resource.to_s.underscore] = YAML.load(File.read('config/curatr.yml'))['resources'][resource.to_s.underscore]
     
     instance_eval &block if block_given?
-  
+    
     resource.run
   
   end
@@ -19,30 +19,42 @@ module Curatr
     @config.merge!(options)
   end
   
+  def self.automatically_publish
+    @config[:autopublish] = true
+  end
+  
   module InstanceMethods
      
     def publish
-      puts "#{self.inspect}" # do we want to Tweet this?
+      self.published = true
+      self.save!
+      # do we want to Tweet this?
     end
   
   end
 
   module ClassMethods
-                     
+    
+    require 'daemons'
+               
     def config
       Curatr.config.resources[self.to_s.underscore]
     end
     
     def run
-      daemon = Daemons.call do
+      
+      attr_accessible :published
+      
+      daemon = Daemons.call(:multiple => true) do
         loop {
-          self.receive
-          sleep 30
+          self.fetch
+          sleep 300
         }
       end
+      
     end
                                         
-    def receive
+    def fetch
 
       begin
 
@@ -58,12 +70,10 @@ module Curatr
 
       end
 
-      # expunge removes the deleted emails
-      imap.expunge
       imap.logout
       imap.disconnect
 
-      # NoResponseError and ByResponseError happen often when imap'ing
+      # NoResponseError and ByResponseError happen often
       rescue Net::IMAP::NoResponseError => e
       rescue Net::IMAP::ByeResponseError => e
       rescue => e
@@ -75,19 +85,13 @@ module Curatr
                 
         self.create!(
           config[:subject] || :subject => mail[:subject],
-          config[:body] || :body => mail[:body]
+          config[:body] || :body => mail[:body],
+          :published => config[:autopublish] || false
         )
         
-        # if queue, add queued flag to instance - need generated migration for this
-        # make sure to notify admin by email if not putting on queue for auto publishing
+        # notify sender that it's been put on the queue and...
+        # notify admin if not autopublished
         
-     end
-
-     def publish_queue
-       #@instances = self.find_all_by_queued(true)
-       #@instances.each do |instance|
-       #  instance.publish
-       #end
      end
 
   end
