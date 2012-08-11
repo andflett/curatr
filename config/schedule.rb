@@ -1,0 +1,1 @@
+every :minute do runner "Brief.receive" end
